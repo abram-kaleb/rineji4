@@ -10,7 +10,6 @@ import Header from './Header';
 const CADViewer: React.FC = () => {
     const containerRef = useRef<HTMLDivElement>(null);
     const [scaleText, setScaleText] = useState('10 unit');
-    const [currentFile, setCurrentFile] = useState('/linesplan.dxf');
 
     const base = import.meta.env.BASE_URL;
 
@@ -20,6 +19,8 @@ const CADViewer: React.FC = () => {
         { name: 'Machinery', path: `${base}machinery.dxf' ` },
         { name: 'Electrical', path: `${base}electrical.dxf` }
     ];
+
+    const [currentFile, setCurrentFile] = useState(drawingFiles[0].path);
 
     const FONT_URL = 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/fonts/helvetiker_regular.typeface.json';
 
@@ -35,7 +36,6 @@ const CADViewer: React.FC = () => {
         if (!text) return "";
         return text.replace(/\\P/g, '\n').replace(/\{[^}]+\}/g, '').replace(/\\[A-Z].;?/g, '').replace(/%%u/gi, '').replace(/\\L/gi, '').replace(/\\l/gi, '').replace(/}/g, '').replace(/{/g, '').replace(/\\~?(\^I|\\)/g, ' ');
     };
-
 
     const processEntities = (entities: any[], font: any, dxf: any, group: THREE.Group) => {
         entities.forEach((entity: any) => {
@@ -77,11 +77,11 @@ const CADViewer: React.FC = () => {
                     const head = new THREE.Vector3().copy(p1);
                     const v1 = new THREE.Vector3(-dir.y, dir.x, 0).multiplyScalar(size * 0.35);
                     const v2 = new THREE.Vector3(dir.y, -dir.x, 0).multiplyScalar(size * 0.35);
-                    const base = new THREE.Vector3().copy(head).sub(dir.clone().multiplyScalar(size));
+                    const baseVec = new THREE.Vector3().copy(head).sub(dir.clone().multiplyScalar(size));
                     const shape = new THREE.Shape();
                     shape.moveTo(head.x, head.y);
-                    shape.lineTo(base.x + v1.x, base.y + v1.y);
-                    shape.lineTo(base.x + v2.x, base.y + v2.y);
+                    shape.lineTo(baseVec.x + v1.x, baseVec.y + v1.y);
+                    shape.lineTo(baseVec.x + v2.x, baseVec.y + v2.y);
                     shape.closePath();
                     group.add(new THREE.Mesh(new THREE.ShapeGeometry(shape), new THREE.MeshBasicMaterial({ color })));
                 }
@@ -123,7 +123,12 @@ const CADViewer: React.FC = () => {
         if (!containerRef.current) return;
         const parser = new DxfParser();
         let dxf: any;
-        try { dxf = parser.parseSync(data); } catch (err) { return; }
+        try {
+            dxf = parser.parseSync(data);
+        } catch (err) {
+            console.error("DXF Parse Error:", err);
+            return;
+        }
 
         const width = containerRef.current.clientWidth;
         const height = containerRef.current.clientHeight;
@@ -145,18 +150,8 @@ const CADViewer: React.FC = () => {
         controls.enableDamping = false;
         controls.zoomSpeed = 2.0;
 
-        // Kontrol Touchscreen: Satu jari untuk Pan (Geser)
-        controls.touches = {
-            ONE: THREE.TOUCH.PAN,
-            TWO: THREE.TOUCH.DOLLY_PAN
-        };
-
-        // Mouse Buttons tetap standar
-        controls.mouseButtons = {
-            LEFT: THREE.MOUSE.PAN,
-            MIDDLE: THREE.MOUSE.DOLLY,
-            RIGHT: THREE.MOUSE.PAN
-        };
+        controls.touches = { ONE: THREE.TOUCH.PAN, TWO: THREE.TOUCH.DOLLY_PAN };
+        controls.mouseButtons = { LEFT: THREE.MOUSE.PAN, MIDDLE: THREE.MOUSE.DOLLY, RIGHT: THREE.MOUSE.PAN };
 
         const gridMaterial = new THREE.ShaderMaterial({
             side: THREE.DoubleSide,
@@ -187,7 +182,6 @@ const CADViewer: React.FC = () => {
             controls.update();
         });
 
-
         const animate = () => {
             requestAnimationFrame(animate);
             controls.update();
@@ -197,7 +191,17 @@ const CADViewer: React.FC = () => {
     };
 
     useEffect(() => {
-        fetch(currentFile).then(res => res.text()).then(data => renderDxf(data));
+        fetch(currentFile)
+            .then(res => {
+                if (!res.ok) throw new Error(`HTTP error! status: ${res.status}`);
+                const contentType = res.headers.get("content-type");
+                if (contentType && contentType.includes("text/html")) {
+                    throw new Error("Received HTML instead of DXF. Check your file path.");
+                }
+                return res.text();
+            })
+            .then(data => renderDxf(data))
+            .catch(err => console.error("Fetch error:", err));
     }, [currentFile]);
 
     return (
@@ -210,8 +214,6 @@ const CADViewer: React.FC = () => {
             <div className="flex-1 relative">
                 <div ref={containerRef} className="w-full h-full cursor-crosshair" />
                 <div className="absolute bottom-8 right-8 pointer-events-none flex flex-col items-center font-mono">
-
-
                 </div>
             </div>
         </div>
