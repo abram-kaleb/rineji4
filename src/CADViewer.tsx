@@ -15,7 +15,9 @@ const CADViewer: React.FC = () => {
     const drawingFiles = [
         { name: 'Lines Plan', path: '/linesplan.dxf' },
         { name: 'General Arrangement', path: '/generalarrangement.dxf' },
-        { name: 'Machinery', path: '/machinery.dxf' }
+        { name: 'Machinery', path: '/machinery.dxf' },
+        { name: 'Electrical', path: '/electrical.dxf' }
+
     ];
 
     const FONT_URL = 'https://raw.githubusercontent.com/mrdoob/three.js/dev/examples/fonts/helvetiker_regular.typeface.json';
