@@ -3,13 +3,13 @@ import React, { useState } from 'react';
 import PdfViewer from './pages/PdfViewer';
 
 const App: React.FC = () => {
-  const [activePdf, setActivePdf] = useState('/GeneralArrangement.pdf');
+  const [activePdf, setActivePdf] = useState(`${import.meta.env.BASE_URL}LinesPlan.pdf`);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const tabs = [
-    { name: 'LINESPLAN_MAIN.DWG', path: '/LinesPlan.pdf' },
-    { name: 'GENERAL_ARRANGEMENT.DWG', path: '/GeneralArrangement.pdf' },
-    { name: 'HYDROSTATIC_DATA.DWG', path: '/linesplan/hydrostatic.pdf' },
+    { name: 'LINESPLAN.DWG', path: `${import.meta.env.BASE_URL}LinesPlan.pdf` },
+    { name: 'SHAFTING_ARRANGEMENT.DWG', path: `${import.meta.env.BASE_URL}PropellerAndShafting.pdf` },
+    { name: 'GENERAL_ARRANGEMENT.DWG', path: `${import.meta.env.BASE_URL}GeneralArrangement.pdf` },
   ];
 
   const currentTabName = tabs.find(t => t.path === activePdf)?.name || 'SELECT FILE';
@@ -21,7 +21,6 @@ const App: React.FC = () => {
           <span className="text-white font-black text-sm select-none">A</span>
         </div>
 
-        {/* DESKTOP TABS */}
         <div className="hidden md:flex h-full items-end gap-[2px]">
           {tabs.map((tab) => {
             const isActive = activePdf === tab.path;
@@ -32,21 +31,19 @@ const App: React.FC = () => {
                 className={`h-7 px-4 flex items-center gap-2 transition-all rounded-t-md text-[10px] font-bold font-mono ${isActive ? 'bg-[#ffffff] text-[#1a1a1a] translate-y-[1px]' : 'bg-[#3d3d3d] text-[#888888] hover:bg-[#4a4a4a] mt-1'
                   }`}
               >
-
                 {tab.name}
               </button>
             );
           })}
         </div>
 
-        {/* MOBILE DROPDOWN */}
         <div className="flex md:hidden flex-1 relative h-full items-center">
           <button
             onClick={() => setIsMenuOpen(!isMenuOpen)}
             className="w-full bg-[#3d3d3d] h-7 px-3 flex items-center justify-between rounded text-[10px] font-mono text-white border border-black/50"
           >
             <span className="truncate mr-2 uppercase tracking-tighter">
-              <span className="text-blue-400 mr-2">●</span> {currentTabName}
+              {currentTabName}
             </span>
             <span>{isMenuOpen ? '▲' : '▼'}</span>
           </button>
@@ -75,14 +72,7 @@ const App: React.FC = () => {
         <PdfViewer key={activePdf} pdfPath={activePdf} />
       </main>
 
-      <footer className="h-6 bg-[#2b2b2b] border-t border-black flex items-center px-3 justify-between flex-shrink-0">
-        <div className="bg-[#1a1a1a] px-3 h-full flex items-center border-x border-black">
-          <span className="text-[9px] text-blue-500 font-bold font-mono">MODEL</span>
-        </div>
-        <span className="text-[9px] text-gray-500 font-mono italic truncate ml-2">
-          {activePdf.split('/').pop()}
-        </span>
-      </footer>
+
     </div>
   );
 };
